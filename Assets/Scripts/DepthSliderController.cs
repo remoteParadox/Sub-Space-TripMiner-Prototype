@@ -119,6 +119,22 @@ public class DepthSliderController : MonoBehaviour
         ApplyLayers(0, maxLayer);
     }
 
+    private void Update()
+    {
+        if (!isInitialized || depthSlider == null) return;
+        
+        // Hold Shift while scrolling to adjust depth; plain scroll is camera zoom.
+        bool shiftHeld = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+        var eventSystem = UnityEngine.EventSystems.EventSystem.current;
+        bool pointerOverUI = eventSystem != null && eventSystem.IsPointerOverGameObject();
+        float scroll = Input.GetAxis("Mouse ScrollWheel");
+        if (shiftHeld && !pointerOverUI && Mathf.Abs(scroll) > 0.01f)
+        {
+            int newValue = Mathf.RoundToInt(depthSlider.value) + (scroll > 0 ? 1 : -1);
+            depthSlider.value = Mathf.Clamp(newValue, (int)depthSlider.minValue, (int)depthSlider.maxValue);
+        }
+    }
+
     private void OnSliderChanged(float value)
     {
         if (!isInitialized) return;
@@ -141,9 +157,15 @@ public class DepthSliderController : MonoBehaviour
     /// </summary>
     private void ApplyLayers(int fromY, int toY)
     {
+        if (gridManager == null || gridManager.grid == null) return;
+        
         SubSpaceBlock[,,] grid = gridManager.grid;
         int sizeX = grid.GetLength(0);
+        int sizeY = grid.GetLength(1);
         int sizeZ = grid.GetLength(2);
+        
+        fromY = Mathf.Max(0, fromY);
+        toY = Mathf.Min(maxLayer, toY);
 
         for (int x = 0; x < sizeX; x++)
         {

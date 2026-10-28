@@ -179,8 +179,11 @@ public class PlayerController : MonoBehaviour
         }
 
         // The shields absorbed the hit: the singularity is safely stabilized.
+        // Trigger chain reaction - reveal surrounding area as per plan
         StabilizeBlock(block);
+        RevealWithFloodFill(block);
         RefreshDepthView();
+        CheckVictory();
     }
 
     // ------------------------------------------------------------------

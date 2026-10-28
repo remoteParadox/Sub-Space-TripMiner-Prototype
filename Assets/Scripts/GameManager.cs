@@ -46,9 +46,12 @@ public class GameManager : MonoBehaviour
 
     [Header("HUD Text (legacy UI Text, all optional)")]
     public Text hullText;
+    public Image[] hullSegments;
     public Text statusText;
     public Text scoreText;
     public Text progressText;
+    public GameObject mistakeBanner;
+    public Text mistakeText;
 
     [Header("End Screen Text (optional)")]
     public Text dimensionLostScoreText;
@@ -74,6 +77,7 @@ public class GameManager : MonoBehaviour
     private int blocksHarvested;
     private int safeBlocksTotal;
     private Color statusBaseColor = Color.white;
+    private float mistakeBannerTimer;
 
     // ------------------------------------------------------------------
     // Read-only state for other scripts
@@ -125,6 +129,15 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
+        if (mistakeBannerTimer > 0f)
+        {
+            mistakeBannerTimer -= Time.unscaledDeltaTime;
+            if (mistakeBannerTimer <= 0f)
+            {
+                SetActive(mistakeBanner, false);
+            }
+        }
+
         if (isWarningState && state == GameState.Playing)
         {
             AnimateWarning();
@@ -213,6 +226,8 @@ public class GameManager : MonoBehaviour
         safeBlocksTotal = 0;
 
         ClearWarning();
+        mistakeBannerTimer = 0f;
+        SetActive(mistakeBanner, false);
 
         if (playerController != null)
         {
@@ -256,6 +271,10 @@ public class GameManager : MonoBehaviour
         if (hullIntegrity > 0)
         {
             hullIntegrity--;
+            string feedback = hullIntegrity <= 0
+                ? "HULL CRITICAL  •  0 / " + startingHull + "  •  NEXT HIT COLLAPSES REALITY"
+                : "SINGULARITY HIT  •  HULL -1  •  " + hullIntegrity + " / " + startingHull + " SHIELDS";
+            ShowMistakeFeedback(feedback);
             onHullDamaged.Invoke();
 
             if (hullIntegrity == 0)
@@ -391,15 +410,39 @@ public class GameManager : MonoBehaviour
     // HUD
     // ------------------------------------------------------------------
 
+    private void ShowMistakeFeedback(string message)
+    {
+        if (mistakeText != null)
+        {
+            mistakeText.text = message;
+        }
+        SetActive(mistakeBanner, true);
+        mistakeBannerTimer = 2.6f;
+    }
+
+    private void UpdateHullSegments()
+    {
+        if (hullSegments == null) return;
+        Color activeColor = hullIntegrity <= 1 ? new Color(1f, 0.25f, 0.20f, 1f) : new Color(0.16f, 0.88f, 1f, 1f);
+        Color depletedColor = new Color(0.15f, 0.22f, 0.28f, 1f);
+        for (int i = 0; i < hullSegments.Length; i++)
+        {
+            if (hullSegments[i] == null) continue;
+            bool active = !isVolatileMode && i < hullIntegrity;
+            hullSegments[i].color = active ? activeColor : depletedColor;
+        }
+    }
+
     private void UpdateHud()
     {
         if (hullText != null)
         {
             hullText.text = isVolatileMode
                 ? "HULL: OFFLINE (VOLATILE MODE)"
-                : "HULL INTEGRITY: " + hullIntegrity + " / " + startingHull;
+                : "HULL  " + hullIntegrity + " / " + startingHull;
         }
 
+        UpdateHullSegments();
         if (statusText != null)
         {
             string status = "";

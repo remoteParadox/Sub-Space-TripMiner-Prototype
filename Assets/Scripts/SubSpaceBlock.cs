@@ -59,12 +59,12 @@ public class SubSpaceBlock : MonoBehaviour
         if (meshRenderer != null)
         {
             meshRenderer.enabled = true;
-            meshRenderer.material.color = originalColor;
+            if (Application.isPlaying) meshRenderer.material.color = originalColor;
         }
     }
 
     /// <summary>
-    /// Placeholder: toggles the shield. When shielded the block turns blue;
+    /// Toggles the shield. When shielded the block turns cyan/blue;
     /// when unshielded it returns to its original color.
     /// </summary>
     public void ToggleShield()
@@ -75,12 +75,13 @@ public class SubSpaceBlock : MonoBehaviour
 
         if (meshRenderer != null)
         {
-            meshRenderer.material.color = isShielded ? Color.blue : originalColor;
+            if (Application.isPlaying) meshRenderer.material.color = isShielded ? new Color(0f, 0.8f, 1f, 1f) : originalColor;
         }
     }
 
     /// <summary>
-    /// Placeholder: hides the block's mesh when phased, shows it otherwise.
+    /// Hides the block's mesh when phased (inside view), shows it otherwise.
+    /// For holographic effect, we can also adjust material.
     /// </summary>
     public void SetPhasedState(bool isPhased)
     {
@@ -101,7 +102,7 @@ public class SubSpaceBlock : MonoBehaviour
 
         if (meshRenderer != null && !hasCachedColor)
         {
-            originalColor = meshRenderer.material.color;
+            originalColor = Application.isPlaying ? meshRenderer.material.color : meshRenderer.sharedMaterial.color;
             hasCachedColor = true;
         }
     }
